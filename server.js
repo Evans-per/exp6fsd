@@ -24,10 +24,12 @@ const connectDB = async () => {
     if (mongoose.connections[0].readyState) {
         return;
     }
-    if (!process.env.MONGO_URI) {
+    const dbURI = process.env.MONGO_URI || "mongodb+srv://evanspereira26_db_user:Test1234@evanscluster.gw2yo0f.mongodb.net/ExpenseTrackerDB?appName=Evanscluster";
+    
+    if (!dbURI) {
         throw new Error("🚨 FATAL VERCEL ERROR: MONGO_URI ENVIRONMENT VARIABLE IS COMPLETELY MISSING!");
     }
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(dbURI);
     console.log('✅ MongoDB connected securely');
 };
 
