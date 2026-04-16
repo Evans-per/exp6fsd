@@ -40,6 +40,7 @@ export default function App() {
         })
         if (!res.ok) {
             const err = await res.json();
+            alert("VERCEL ERROR:\n" + (err.details || err.error || JSON.stringify(err)));
             return setToast('Error: ' + (err.error || err.message || 'Failed'));
         }
         setTransactions(prev => prev.map(t => t.id === editing.id ? { ...t, ...tx } : t))
@@ -53,6 +54,7 @@ export default function App() {
         })
         if (!res.ok) {
             const err = await res.json();
+            alert("VERCEL ERROR:\n" + (err.details || err.error || JSON.stringify(err)));
             return setToast('Error: ' + (err.error || err.message || 'Failed'));
         }
         const newTx = await res.json()
