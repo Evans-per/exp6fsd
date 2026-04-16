@@ -21,15 +21,17 @@ const formatToSchema = (body) => {
 };
 
 // Utility to convert MongoDB Schema format -> React frontend format
-const formatToFrontend = (doc) => {
+const formatToFrontend = (mongooseDoc) => {
+    const doc = mongooseDoc.toObject ? mongooseDoc.toObject() : mongooseDoc;
     const isExpense = doc.amount < 0;
+    
     return {
-        _id: doc._id,
-        id: doc._id, // React uses id
-        amount: Math.abs(doc.amount), // React UI expects positive amounts combined with 'type'
+        _id: doc._id.toString(),
+        id: doc._id.toString(), 
+        amount: Math.abs(doc.amount || 0), 
         type: isExpense ? 'expense' : 'income',
-        description: doc.category, // React uses description for the text
-        category: doc.category,
+        description: doc.category || 'Unknown', 
+        category: doc.category || 'Unknown',
         date: doc.date
     };
 };
