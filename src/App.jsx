@@ -33,11 +33,15 @@ export default function App() {
   const addOrSave = async (tx) => {
     try {
       if (editing) {
-        await fetch(`${API_BASE}/${editing.id}`, {
+        const res = await fetch(`${API_BASE}/${editing.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tx)
         })
+        if (!res.ok) {
+            const err = await res.json();
+            return setToast('Error: ' + (err.error || err.message || 'Failed'));
+        }
         setTransactions(prev => prev.map(t => t.id === editing.id ? { ...t, ...tx } : t))
         setToast('Transaction updated')
         setEditing(null)
@@ -47,6 +51,10 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tx)
         })
+        if (!res.ok) {
+            const err = await res.json();
+            return setToast('Error: ' + (err.error || err.message || 'Failed'));
+        }
         const newTx = await res.json()
         setTransactions(prev => [{ ...newTx, id: newTx._id }, ...prev])
         setToast('Transaction added')
