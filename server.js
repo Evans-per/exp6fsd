@@ -17,10 +17,28 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Setting up MongoDB connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/expense_tracker')
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+// Bulletproof Serverless MongoDB Connection
+const connectDB = async () => {
+    // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
+    if (mongoose.connections[0].readyState) {
+        return;
+    }
+    if (!process.env.MONGO_URI) {
+        throw new Error("🚨 FATAL VERCEL ERROR: MONGO_URI ENVIRONMENT VARIABLE IS COMPLETELY MISSING!");
+    }
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ MongoDB connected securely');
+};
+
+// Ensure DB connects before any API requests proceed
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        return res.status(500).json({ error: "Database setup failed", details: err.message });
+    }
+});
 
 // Routes
 app.use('/api/expenses', expenseRoutes);
