@@ -7,13 +7,7 @@ import Toast from './components/Toast'
 import Charts from './components/Charts'
 
 export default function App() {
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const raw = localStorage.getItem('txs')
-      return raw ? JSON.parse(raw) : []
-    } catch (e) { return [] }
-  })
-  
+  const [transactions, setTransactions] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toast, setToast] = useState('')
@@ -22,31 +16,58 @@ export default function App() {
   const [sort, setSort] = useState('latest')
 
   useEffect(() => {
-    localStorage.setItem('txs', JSON.stringify(transactions))
-  }, [transactions])
+    fetch('http://localhost:5000/api/expenses')
+      .then(res => res.json())
+      .then(data => {
+        if (data.expenses) {
+          setTransactions(data.expenses.map(t => ({ ...t, id: t._id })))
+        }
+      })
+      .catch(console.error)
+  }, [])
 
-  const addOrSave = (tx) => {
-    if (editing) {
-      setTransactions(prev => prev.map(t => t.id === editing.id ? { ...t, ...tx } : t))
-      setToast('Transaction updated')
-      setEditing(null)
-    } else {
-      const item = { id: Date.now(), ...tx }
-      setTransactions(prev => [item, ...prev])
-      setToast('Transaction added')
+  const addOrSave = async (tx) => {
+    try {
+      if (editing) {
+        await fetch(`http://localhost:5000/api/expenses/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tx)
+        })
+        setTransactions(prev => prev.map(t => t.id === editing.id ? { ...t, ...tx } : t))
+        setToast('Transaction updated')
+        setEditing(null)
+      } else {
+        const res = await fetch('http://localhost:5000/api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tx)
+        })
+        const newTx = await res.json()
+        setTransactions(prev => [{ ...newTx, id: newTx._id }, ...prev])
+        setToast('Transaction added')
+      }
+    } catch (e) {
+      console.error(e)
     }
   }
 
-  const requestDelete = (t) => {
+  const requestDelete = async (t) => {
     const ok = window.confirm(`Delete "${t.description}"?`)
     if (!ok) return
-    setTransactions(prev => prev.filter(x => x.id !== t.id))
-    setToast('Transaction deleted')
+    try {
+      await fetch(`http://localhost:5000/api/expenses/${t.id}`, { method: 'DELETE' })
+      setTransactions(prev => prev.filter(x => x.id !== t.id))
+      setToast('Transaction deleted')
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const clearAll = () => {
     if (!transactions.length) return
     if (!window.confirm('Clear all transactions?')) return
+    transactions.forEach(t => fetch(`http://localhost:5000/api/expenses/${t.id}`, { method: 'DELETE' }).catch(console.error))
     setTransactions([])
     setToast('All cleared')
   }
