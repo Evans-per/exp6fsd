@@ -15,8 +15,12 @@ export default function App() {
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('latest')
 
+  const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api/expenses' 
+    : '/api/expenses';
+
   useEffect(() => {
-    fetch('http://localhost:5000/api/expenses')
+    fetch(API_BASE)
       .then(res => res.json())
       .then(data => {
         if (data.expenses) {
@@ -29,7 +33,7 @@ export default function App() {
   const addOrSave = async (tx) => {
     try {
       if (editing) {
-        await fetch(`http://localhost:5000/api/expenses/${editing.id}`, {
+        await fetch(`${API_BASE}/${editing.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tx)
@@ -38,7 +42,7 @@ export default function App() {
         setToast('Transaction updated')
         setEditing(null)
       } else {
-        const res = await fetch('http://localhost:5000/api/expenses', {
+        const res = await fetch(API_BASE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tx)
@@ -56,7 +60,7 @@ export default function App() {
     const ok = window.confirm(`Delete "${t.description}"?`)
     if (!ok) return
     try {
-      await fetch(`http://localhost:5000/api/expenses/${t.id}`, { method: 'DELETE' })
+      await fetch(`${API_BASE}/${t.id}`, { method: 'DELETE' })
       setTransactions(prev => prev.filter(x => x.id !== t.id))
       setToast('Transaction deleted')
     } catch (e) {
@@ -67,7 +71,7 @@ export default function App() {
   const clearAll = () => {
     if (!transactions.length) return
     if (!window.confirm('Clear all transactions?')) return
-    transactions.forEach(t => fetch(`http://localhost:5000/api/expenses/${t.id}`, { method: 'DELETE' }).catch(console.error))
+    transactions.forEach(t => fetch(`${API_BASE}/${t.id}`, { method: 'DELETE' }).catch(console.error))
     setTransactions([])
     setToast('All cleared')
   }

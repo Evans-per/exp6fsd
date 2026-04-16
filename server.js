@@ -25,8 +25,13 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/expense_tra
 // Routes
 app.use('/api/expenses', expenseRoutes);
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+// Run server locally only if not on Vercel
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+    });
+}
+
+// Export for Vercel
+module.exports = app;
